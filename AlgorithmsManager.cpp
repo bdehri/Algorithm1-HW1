@@ -1,4 +1,6 @@
 #include "AlgorithmsManager.h"
+#include <math.h>
+#include <iostream>
 
 
 
@@ -11,17 +13,28 @@ AlgorithmsManager::~AlgorithmsManager()
 {
 }
 
-void AlgorithmsManager::mergeSort(DeckVector& sortVector, int lowIndice, int highIndice, std::string type) {
+
+void AlgorithmsManager::mergeSortFull(DeckVector& sortVector, int lowIndice, int highIndice) {
 	if (lowIndice < highIndice) {
 		int middle = floor((highIndice + lowIndice) / 2);
-		mergeSort(sortVector, lowIndice, middle,type);
-		mergeSort(sortVector, middle + 1, highIndice,type);
-		merge(sortVector, lowIndice, middle, highIndice, type);
+		mergeSortFull(sortVector, lowIndice, middle);
+		mergeSortFull(sortVector, middle + 1, highIndice);
+		mergeFull(sortVector, lowIndice, middle, highIndice);
 	}
 
 }
 
-void AlgorithmsManager::merge(DeckVector& sortVector, int lowIndice, int middle, int highIndice, std::string type) {
+void AlgorithmsManager::mergeSortFilter(DeckVector& sortVector, int lowIndice, int highIndice) {
+	if (lowIndice < highIndice) {
+		int middle = floor((highIndice + lowIndice) / 2);
+		mergeSortFilter(sortVector, lowIndice, middle);
+		mergeSortFilter(sortVector, middle + 1, highIndice);
+		mergeFilter(sortVector, lowIndice, middle, highIndice);
+	}
+
+}
+
+void AlgorithmsManager::mergeFull(DeckVector& sortVector, int lowIndice, int middle, int highIndice) {
 	int n1 = middle - lowIndice + 1;
 	int n2 = highIndice - middle;
 
@@ -43,7 +56,7 @@ void AlgorithmsManager::merge(DeckVector& sortVector, int lowIndice, int middle,
 	for (auto k = lowIndice; k <= highIndice; k++)
 	{
 		if (j < n2 && i < n1) {
-			if (type == "full") {
+			
 				if (leftVec[i]->Class < rightVec[j]->Class)
 				{
 					sortVector[k] = std::move(leftVec[i]);
@@ -74,19 +87,8 @@ void AlgorithmsManager::merge(DeckVector& sortVector, int lowIndice, int middle,
 					sortVector[k] = std::move(rightVec[j]);
 					j++;
 				}
-			}
-			else if (type == "filter")
-			{
-				if (leftVec[i]->type <= rightVec[j]->type) //sort according to type
-				{
-					sortVector[k] = std::move(leftVec[i]);
-					i = i + 1;
-				}
-				else {
-					sortVector[k] = std::move(rightVec[j]);
-					j++;
-				}
-			}
+			
+
 		}
 		else if (j < n2) // move rest of the vectors
 		{
@@ -102,7 +104,56 @@ void AlgorithmsManager::merge(DeckVector& sortVector, int lowIndice, int middle,
 	}
 }
 
-void AlgorithmsManager::insertionSort(DeckVector& sortVector, const std::string type) {
+void AlgorithmsManager::mergeFilter(DeckVector& sortVector, int lowIndice, int middle, int highIndice) {
+	int n1 = middle - lowIndice + 1;
+	int n2 = highIndice - middle;
+
+	DeckVector leftVec(n1);
+	DeckVector rightVec(n2);
+	int index = 0;
+	for (int i = 0; i < n1; i++)
+	{
+		index = lowIndice + i;
+		leftVec[i] = std::move(sortVector[index]);
+	}
+	for (int j = 0; j < n2; j++)
+	{
+		index = middle + j + 1;
+		rightVec[j] = std::move(sortVector[index]);
+	}
+	int i = 0;
+	int j = 0;
+	for (auto k = lowIndice; k <= highIndice; k++)
+	{
+		if (j < n2 && i < n1) {
+
+				if (leftVec[i]->type <= rightVec[j]->type) //sort according to type
+				{
+					sortVector[k] = std::move(leftVec[i]);
+					i = i + 1;
+				}
+				else {
+					sortVector[k] = std::move(rightVec[j]);
+					j++;
+				}
+			
+		}
+		else if (j < n2) // move rest of the vectors
+		{
+			sortVector[k] = std::move(rightVec[j]);
+			j++;
+		}
+		else if (i < n1)
+		{
+			sortVector[k] = std::move(leftVec[i]);
+			i = i + 1;
+		}
+
+	}
+}
+
+
+void AlgorithmsManager::insertionSortFull(DeckVector& sortVector) {
 
 	for (auto j = 1; j < sortVector.size(); j++)
 	{
@@ -110,7 +161,6 @@ void AlgorithmsManager::insertionSort(DeckVector& sortVector, const std::string 
 		int i = j - 1;
 		while (i >= 0)
 		{
-			if (type == "full") {
 				if (sortVector[i]->Class > keyNode->Class)
 				{
 					sortVector[i + 1] = std::move(sortVector[i]);
@@ -137,8 +187,23 @@ void AlgorithmsManager::insertionSort(DeckVector& sortVector, const std::string 
 				else {
 					break;
 				}
-			}
-			else if (type == "filter") {
+			
+
+		}
+		sortVector[i + 1] = std::move(keyNode);
+	}
+}
+
+
+void AlgorithmsManager::insertionSortFilter(DeckVector& sortVector) {
+
+	for (auto j = 1; j < sortVector.size(); j++)
+	{
+		CardPointer keyNode = std::move(sortVector[j]);
+		int i = j - 1;
+		while (i >= 0)
+		{
+			
 				if (sortVector[i]->type > keyNode->type)
 				{
 					sortVector[i + 1] = std::move(sortVector[i]);
@@ -147,7 +212,7 @@ void AlgorithmsManager::insertionSort(DeckVector& sortVector, const std::string 
 				else {
 					break;
 				}
-			}
+			
 		}
 		sortVector[i + 1] = std::move(keyNode);
 	}

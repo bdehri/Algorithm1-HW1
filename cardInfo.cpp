@@ -15,4 +15,5 @@ CardInfo::CardInfo(std::string name , std::string Class , std::string rarity , s
 
 CardInfo::~CardInfo()
 {
+	std::cout<< "CardInfo::~CardInfo" << std::endl;
 }

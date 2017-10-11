@@ -42,23 +42,39 @@ void CardManager::readFile(std::string file) {
 		std::cout << "File could not be opened." << std::endl;
 	}
 }
+void CardManager::writeFile(std::string file) {
+	std::string line;
+	std::ofstream myfile(file);
+	if (myfile.is_open())
+	{
+		for(auto i = 0 ; i < deck.size() ; i++)//write file line by line
+		{
+			myfile << deck[i]->name << "\t" << deck[i]->Class << "\t" << deck[i]->rarity << "\t" <<
+			deck[i]->set << "\t" << deck[i]->type << "\t" << deck[i]->cost <<"\n";
+		}
+
+	}
+	else {
+		std::cout << "File could not be opened." << std::endl;
+	}
+}
 
 
 void CardManager::filterSort(std::string type) {
 	if (type == "-i") {
-		insertionSort(deck,"filter");
+		AlgorithmsManager::insertionSortFilter(deck);
 	}
 	if (type == "-m") {
-		mergeSort(deck,0,(deck.size()-1),"filter");
+		AlgorithmsManager::mergeSortFilter(deck,0,(deck.size()-1));
 	}
 }
 
 void CardManager::fullSort(std::string type) {
 	if (type == "-i") {
-		insertionSort(deck,"full");
+		AlgorithmsManager::insertionSortFull(deck);
 	}
 	if (type == "-m") {
-		mergeSort(deck, 0 ,(deck.size() - 1), "full");
+		AlgorithmsManager::mergeSortFull(deck, 0 ,(deck.size() - 1));
 	}
 }
 
@@ -68,160 +84,32 @@ void CardManager::sortManager(std::string sortingType, std::string algoType, std
 
 	std::cout << "I/O finished \n";
 	
+	auto start = std::chrono::system_clock::now();
+
 	if (sortingType == "-full") {
 		fullSort(algoType);
 	}
 	else if (sortingType == "-filter") {
 		filterSort(algoType);
 	}
+	auto end = std::chrono::system_clock::now();
 
-		for (auto x=0;x<deck.size();x++)
+		/*for (auto x=0;x<deck.size();x++)
 	{
 		std::cout << deck[x]->name << "\t" << deck[x]->Class << "\t" << deck[x]->rarity << "\t" <<
 			deck[x]->set << "\t" << deck[x]->type << "\t" << deck[x]->cost << std::endl;
 
-	}
+	}*/
+
+	writeFile(output);		
+			
+	deck.clear();
+
+	std::chrono::duration<double> elapsed_seconds = end-start;
+    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+ 	std::cout << output << std::endl;
+    std::cout << "finished computation at " << std::ctime(&end_time)
+              << "elapsed time: " << elapsed_seconds.count() << "s\n";
 }
 
 
-void CardManager::mergeSort(DeckVector& sortVector, int lowIndice, int highIndice, std::string type) {
-	if (lowIndice < highIndice) {
-		int middle = floor((highIndice + lowIndice) / 2);
-		mergeSort(sortVector, lowIndice, middle, type);
-		mergeSort(sortVector, middle + 1, highIndice, type);
-		merge(sortVector, lowIndice, middle, highIndice, type);
-	}
-
-}
-
-void CardManager::merge(DeckVector& sortVector, int lowIndice, int middle, int highIndice, std::string type) {
-	int n1 = middle - lowIndice + 1;
-	int n2 = highIndice - middle;
-
-	DeckVector leftVec(n1);
-	DeckVector rightVec(n2);
-	int index = 0;
-	for (int i = 0; i < n1; i++)
-	{
-		index = lowIndice + i;
-		leftVec[i] = std::move(sortVector[index]);
-	}
-	for (int j = 0; j < n2; j++)
-	{
-		index = middle + j + 1;
-		rightVec[j] = std::move(sortVector[index]);
-	}
-	int i = 0;
-	int j = 0;
-	for (auto k = lowIndice; k <= highIndice; k++)
-	{
-		if (j < n2 && i < n1) {
-			if (type == "full") {
-				if (leftVec[i]->Class < rightVec[j]->Class)
-				{
-					sortVector[k] = std::move(leftVec[i]);
-					i = i + 1;
-				}
-				else if (leftVec[i]->Class == rightVec[j]->Class) { //if class equals sort according to cost
-					if (leftVec[i]->cost < rightVec[j]->cost) {
-						sortVector[k] = std::move(leftVec[i]);
-						i = i + 1;
-					}
-					else if (leftVec[i]->cost == rightVec[j]->cost) { //if cost equals sort according to name
-						if (leftVec[i]->name <= rightVec[j]->name) {
-							sortVector[k] = std::move(leftVec[i]);
-							i = i + 1;
-						}
-						else {
-							sortVector[k] = std::move(rightVec[j]);
-							j++;
-						}
-					}
-					else
-					{
-						sortVector[k] = std::move(rightVec[j]);
-						j++;
-					}
-				}
-				else {
-					sortVector[k] = std::move(rightVec[j]);
-					j++;
-				}
-			}
-			else if (type == "filter")
-			{
-				if (leftVec[i]->type <= rightVec[j]->type) //sort according to type
-				{
-					sortVector[k] = std::move(leftVec[i]);
-					i = i + 1;
-				}
-				else {
-					sortVector[k] = std::move(rightVec[j]);
-					j++;
-				}
-			}
-		}
-		else if (j < n2) // move rest of the vectors
-		{
-			sortVector[k] = std::move(rightVec[j]);
-			j++;
-		}
-		else if (i < n1)
-		{
-			sortVector[k] = std::move(leftVec[i]);
-			i = i + 1;
-		}
-
-	}
-}
-
-void CardManager::insertionSort(DeckVector& sortVector, const std::string type) {
-
-	for (auto j = 1; j < sortVector.size(); j++)
-	{
-		CardPointer keyNode = std::move(sortVector[j]);
-		int i = j - 1;
-		while (i >= 0)
-		{
-			if (type == "full") {
-				if (sortVector[i]->Class > keyNode->Class)
-				{
-					sortVector[i + 1] = std::move(sortVector[i]);
-					i = i - 1;
-				}
-				else if (sortVector[i]->Class == keyNode->Class) {
-					if (sortVector[i]->cost > keyNode->cost) {
-						sortVector[i + 1] = std::move(sortVector[i]);
-						i = i - 1;
-					}
-					else if (sortVector[i]->cost == keyNode->cost) {
-						if (sortVector[i]->name > keyNode->name) {
-							sortVector[i + 1] = std::move(sortVector[i]);
-							i = i - 1;
-						}
-						else {
-							break;
-						}
-					}
-					else {
-						break;
-					}
-				}
-				else {
-					break;
-				}
-			}
-			else if (type == "filter") {
-				if (sortVector[i]->type > keyNode->type)
-				{
-					sortVector[i + 1] = std::move(sortVector[i]);
-					i = i - 1;
-				}
-				else {
-					break;
-				}
-			}
-		}
-		sortVector[i + 1] = std::move(keyNode);
-	}
-}
